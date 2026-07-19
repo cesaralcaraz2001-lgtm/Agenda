@@ -302,8 +302,88 @@ function renderEvolucion() {
       <div class="bar-chart">${bars}</div>
       <div class="chart-legend">Verde ≥ 80% de cumplimiento semanal · Ocre 50-79% · Rojo &lt; 50%. Semanas futuras en gris.</div>
     </div>
+
+    <div class="section-label" style="margin-top:24px">Copia de seguridad</div>
+    <div class="backup-box">
+      <p class="backup-text">Exporta tus datos para llevarlos a otro navegador u ordenador, o impórtalos aquí si vienes de otro dispositivo.</p>
+      <div class="backup-actions">
+        <button class="backup-btn" id="export-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Exportar datos
+        </button>
+        <button class="backup-btn" id="import-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Importar datos
+        </button>
+        <input type="file" id="import-file" accept="application/json" style="display:none">
+      </div>
+      <div id="backup-msg" class="backup-msg"></div>
+    </div>
   `;
+
+  el.querySelector("#export-btn").onclick = exportData;
+  const fileInput = el.querySelector("#import-file");
+  el.querySelector("#import-btn").onclick = () => fileInput.click();
+  fileInput.onchange = (e) => {
+    if (e.target.files && e.target.files[0]) importData(e.target.files[0]);
+  };
+
   return el;
+}
+
+/* ---------------- Export / Import ---------------- */
+function exportData() {
+  const payload = {
+    app: "expediente-estudio-oposicion",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    logsDiarios: logs,
+    temasEstado: temas,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = toISO(new Date());
+  a.href = url;
+  a.download = `expediente-estudio-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showBackupMsg("Copia exportada correctamente.", false);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== "object" || !("logsDiarios" in data) || !("temasEstado" in data)) {
+        throw new Error("Formato no reconocido");
+      }
+      const proceed = window.confirm(
+        "Esto reemplazará los datos actuales guardados en este navegador por los del archivo importado. ¿Continuar?"
+      );
+      if (!proceed) return;
+      logs = data.logsDiarios || {};
+      temas = data.temasEstado || temas;
+      saveJSON("logs-diarios", logs);
+      saveJSON("temas-estado", temas);
+      showBackupMsg("Datos importados correctamente.", false);
+      render();
+    } catch (err) {
+      showBackupMsg("No se pudo leer el archivo. Comprueba que es un backup válido.", true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showBackupMsg(text, isError) {
+  const msg = document.getElementById("backup-msg");
+  if (!msg) return;
+  msg.textContent = text;
+  msg.className = "backup-msg" + (isError ? " error" : " ok");
+  setTimeout(() => { if (msg) { msg.textContent = ""; msg.className = "backup-msg"; } }, 4000);
 }
 
 /* ---------------- Main render / router ---------------- */

@@ -28,6 +28,19 @@ del sitio en el navegador que uses.
 6. Espera 1-2 minutos. Tu app quedará publicada en:
    `https://TU_USUARIO.github.io/TU_REPO/`
 
+## Exportar / Importar datos
+
+En la pestaña **Evolución** hay una sección "Copia de seguridad":
+
+- **Exportar datos**: descarga un archivo `.json` con todo tu progreso (bloques
+  marcados, notas y estado del temario).
+- **Importar datos**: sube ese mismo archivo desde otro navegador u ordenador
+  para recuperar tu progreso ahí. Te pedirá confirmación porque sobrescribe
+  los datos que hubiera en ese navegador.
+
+Así puedes moverte de móvil a PC (o hacer una copia de seguridad periódica)
+sin necesidad de ninguna base de datos ni backend.
+
 ## Notas
 
 - Como los datos viven en `localStorage`, cada navegador/dispositivo tendrá su
