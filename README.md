@@ -63,6 +63,23 @@ manualmente. Puedes navegar a otros días con las flechas para rellenar
 retroactivamente o adelantar trabajo, pero al recargar la app siempre vuelve
 al día de hoy.
 
+## Icono para el móvil
+
+La app ya incluye icono propio (el sello dorado sobre fondo oscuro) para
+cuando la añadas a la pantalla de inicio de tu móvil:
+
+- `favicon.ico` — icono de pestaña del navegador
+- `icons/apple-touch-icon.png` — icono al añadir a inicio en iPhone/iPad
+- `icons/icon-192.png` y `icons/icon-512.png` — icono en Android/Chrome
+- `manifest.json` — hace que, al añadirla a inicio, se abra a pantalla
+  completa como una app normal (sin barra de navegador)
+
+**Para añadirla a la pantalla de inicio (Android/Chrome):**
+abre la URL → menú (⋮) → "Añadir a pantalla de inicio" / "Instalar app"
+
+Recuerda subir también la carpeta `icons/` completa y `favicon.ico` y
+`manifest.json` a la raíz del repositorio junto con los demás archivos.
+
 ## Notas
 
 - Como los datos viven en `localStorage`, cada navegador/dispositivo tendrá su
