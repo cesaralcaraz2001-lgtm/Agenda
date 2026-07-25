@@ -401,6 +401,59 @@ textarea.notas {
   margin-top: 10px;
 }
 
+.today-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #fff;
+  background: var(--red);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 4px;
+}
+
+.minimo-box {
+  background: #FBF3E1;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 12px 12px 4px;
+  margin-bottom: 8px;
+}
+.minimo-box.done {
+  background: #EFF6F1;
+  border-color: var(--green);
+}
+.minimo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.minimo-title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 14px;
+}
+.minimo-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.minimo-box.done .minimo-tag { color: var(--green); font-weight: 700; }
+.minimo-row {
+  border-bottom: 1px solid rgba(169, 122, 47, 0.25);
+}
+.minimo-box.done .minimo-row { border-bottom-color: rgba(47, 109, 79, 0.25); }
+.minimo-row:last-of-type { border-bottom: none; }
+.minimo-row input[type="checkbox"] { accent-color: var(--gold); }
+.minimo-box.done .minimo-row input[type="checkbox"] { accent-color: var(--green); }
+
 .backup-box {
   background: #fff8;
   border: 1px solid var(--line);

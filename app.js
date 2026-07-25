@@ -46,10 +46,30 @@ const BLOQUES = [
   { key: "b3", label: "Bloque 3 · Supuestos y Test", sub: "60 min — test difícil + caso práctico" },
 ];
 
+const MINIMOS = [
+  { key: "m1", label: "Test del tema que toca", sub: "Un test enfocado en el tema del día" },
+  { key: "m2", label: "Artículos más importantes organizados", sub: "Localizar y ordenar los artículos clave del tema" },
+  { key: "m3", label: "Lectura de esos artículos", sub: "Leerlos en voz alta, con calma" },
+];
+
 const BAR_COLORS = { green: "#2F6D4F", gold: "#A97A2F", red: "#A13D2C", line: "#CFC3A3" };
 
+const EMPTY_LOG = { b1: false, b2: false, b3: false, m1: false, m2: false, m3: false, nota: "" };
+
+function isDayComplete(l) {
+  if (!l) return false;
+  const fullBlocks = l.b1 && l.b2 && l.b3;
+  const minimo = l.m1 && l.m2 && l.m3;
+  return !!(fullBlocks || minimo);
+}
+
 /* ---------------- Date helpers ---------------- */
-function toISO(d) { return d.toISOString().slice(0, 10); }
+function toISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 function parseISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function isScheduledDay(d) { return d.getDay() !== 0; }
 function weekLabelFor(iso) { return WEEKS.find(w => iso >= w.start && iso <= w.end) || null; }
@@ -104,7 +124,7 @@ let cursor = nearestScheduled(toISO(new Date()));
 let activeTab = "hoy";
 
 function updateLog(iso, patch) {
-  logs[iso] = Object.assign({ b1: false, b2: false, b3: false, nota: "" }, logs[iso] || {}, patch);
+  logs[iso] = Object.assign({}, EMPTY_LOG, logs[iso] || {}, patch);
   saveJSON("logs-diarios", logs);
   render();
 }
@@ -121,18 +141,16 @@ function computeStats() {
   const pastScheduled = SCHEDULE.filter(d => d <= today);
   let completed = 0;
   pastScheduled.forEach(d => {
-    const l = logs[d];
-    if (l && l.b1 && l.b2 && l.b3) completed++;
+    if (isDayComplete(logs[d])) completed++;
   });
   let streak = 0;
   for (let i = pastScheduled.length - 1; i >= 0; i--) {
-    const l = logs[pastScheduled[i]];
-    if (l && l.b1 && l.b2 && l.b3) streak++;
+    if (isDayComplete(logs[pastScheduled[i]])) streak++;
     else break;
   }
   const weekly = WEEKS.map(w => {
     const days = SCHEDULE.filter(d => d >= w.start && d <= w.end && d <= today);
-    const done = days.filter(d => { const l = logs[d]; return l && l.b1 && l.b2 && l.b3; }).length;
+    const done = days.filter(d => isDayComplete(logs[d])).length;
     const pct = days.length ? Math.round((done / days.length) * 100) : null;
     return Object.assign({}, w, { done, total: days.length, pct });
   });
@@ -143,11 +161,19 @@ function computeStats() {
 /* ---------------- Render: Hoy ---------------- */
 function renderHoy() {
   const wLabel = weekLabelFor(cursor);
-  const curLog = logs[cursor] || { b1: false, b2: false, b3: false, nota: "" };
-  const allDone = curLog.b1 && curLog.b2 && curLog.b3;
+  const curLog = logs[cursor] || EMPTY_LOG;
+  const fullDone = curLog.b1 && curLog.b2 && curLog.b3;
+  const minimoDone = curLog.m1 && curLog.m2 && curLog.m3;
+  const allDone = isDayComplete(curLog);
   const curIdx = SCHEDULE.indexOf(cursor);
   const canPrev = curIdx > 0;
   const canNext = curIdx < SCHEDULE.length - 1;
+  const isToday = cursor === nearestScheduled(toISO(new Date()));
+
+  let statusSub;
+  if (allDone && fullDone) statusSub = "Los tres bloques quedan sellados como conformes.";
+  else if (allDone && minimoDone) statusSub = "Mínimo del día cumplido — la jornada cuenta como conforme.";
+  else statusSub = "Completa los tres bloques o, al menos, el mínimo del día.";
 
   const el = document.createElement("div");
   el.innerHTML = `
@@ -156,6 +182,7 @@ function renderHoy() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
       <div style="text-align:center">
+        ${isToday ? `<div class="today-badge">HOY</div>` : ""}
         <div class="day-title">${fmtLong(cursor)}</div>
         ${wLabel ? `<div class="day-week">${wLabel.id} · ${wLabel.temas} — ${wLabel.foco}</div>` : ""}
       </div>
@@ -168,10 +195,27 @@ function renderHoy() {
       <div class="stamp ${allDone ? "done" : ""}"><span>${allDone ? "CONFORME" : "PEND."}</span></div>
       <div style="flex:1">
         <div class="status-title ${allDone ? "done" : ""}">${allDone ? "Jornada completa" : "Jornada en curso"}</div>
-        <div class="status-sub">${allDone ? "Los tres bloques quedan sellados como conformes." : "Marca los tres bloques al completarlos para sellar el día."}</div>
+        <div class="status-sub">${statusSub}</div>
       </div>
     </div>
 
+    <div class="minimo-box ${minimoDone ? "done" : ""}">
+      <div class="minimo-head">
+        <span class="minimo-title">Mínimo del día</span>
+        <span class="minimo-tag">${minimoDone ? "Cumplido" : "Cumpliendo esto, el día ya cuenta"}</span>
+      </div>
+      ${MINIMOS.map(m => `
+        <label class="bloque-row minimo-row" data-key="${m.key}">
+          <input type="checkbox" data-key="${m.key}" ${curLog[m.key] ? "checked" : ""}>
+          <div>
+            <div class="bloque-label ${curLog[m.key] ? "done" : ""}">${m.label}</div>
+            <div class="bloque-sub">${m.sub}</div>
+          </div>
+        </label>
+      `).join("")}
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Sesión completa (210 min)</div>
     ${BLOQUES.map(b => `
       <label class="bloque-row" data-key="${b.key}">
         <input type="checkbox" data-key="${b.key}" ${curLog[b.key] ? "checked" : ""}>
@@ -214,8 +258,8 @@ function renderSemana() {
       <div class="week-grid">
         ${days.map(d => {
           const l = logs[d];
-          const done = l && l.b1 && l.b2 && l.b3;
-          const partial = l && (l.b1 || l.b2 || l.b3) && !done;
+          const done = isDayComplete(l);
+          const partial = l && (l.b1 || l.b2 || l.b3 || l.m1 || l.m2 || l.m3) && !done;
           const isFuture = d > today;
           let cls = "day-cell";
           if (done) cls += " done";
